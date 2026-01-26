@@ -137,7 +137,7 @@ func (e *GeminiExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, r
 		}
 	}
 	baseURL := resolveGeminiBaseURL(auth)
-	url := fmt.Sprintf("%s/%s/models/%s:%s", baseURL, glAPIVersion, baseModel, action)
+	url := buildGeminiURL(baseURL, baseModel, action)
 	if opts.Alt != "" && action != "countTokens" {
 		url = url + fmt.Sprintf("?$alt=%s", opts.Alt)
 	}
@@ -234,7 +234,7 @@ func (e *GeminiExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.A
 	body, _ = sjson.SetBytes(body, "model", baseModel)
 
 	baseURL := resolveGeminiBaseURL(auth)
-	url := fmt.Sprintf("%s/%s/models/%s:%s", baseURL, glAPIVersion, baseModel, "streamGenerateContent")
+	url := buildGeminiURL(baseURL, baseModel, "streamGenerateContent")
 	if opts.Alt == "" {
 		url = url + "?alt=sse"
 	} else {
@@ -353,7 +353,7 @@ func (e *GeminiExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Aut
 	translatedReq, _ = sjson.SetBytes(translatedReq, "model", baseModel)
 
 	baseURL := resolveGeminiBaseURL(auth)
-	url := fmt.Sprintf("%s/%s/models/%s:%s", baseURL, glAPIVersion, baseModel, "countTokens")
+	url := buildGeminiURL(baseURL, baseModel, "countTokens")
 
 	requestBody := bytes.NewReader(translatedReq)
 
@@ -450,6 +450,16 @@ func resolveGeminiBaseURL(auth *cliproxyauth.Auth) string {
 		return glEndpoint
 	}
 	return base
+}
+
+// buildGeminiURL constructs the full URL for Gemini API requests.
+// If baseURL contains {model} placeholder, it replaces it with the model name.
+// Otherwise, it uses the default path format: baseURL/v1beta/models/model:action
+func buildGeminiURL(baseURL, model, action string) string {
+	if strings.Contains(baseURL, "{model}") {
+		return strings.Replace(baseURL, "{model}", model, 1) + ":" + action
+	}
+	return fmt.Sprintf("%s/%s/models/%s:%s", baseURL, glAPIVersion, model, action)
 }
 
 func (e *GeminiExecutor) resolveGeminiConfig(auth *cliproxyauth.Auth) *config.GeminiKey {

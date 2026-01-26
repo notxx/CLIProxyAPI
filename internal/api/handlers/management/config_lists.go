@@ -983,8 +983,11 @@ func normalizeClaudeKey(entry *config.ClaudeKey) {
 		model := entry.Models[i]
 		model.Name = strings.TrimSpace(model.Name)
 		model.Alias = strings.TrimSpace(model.Alias)
-		if model.Name == "" && model.Alias == "" {
+		if model.Name == "" {
 			continue
+		}
+		if model.Alias == "" {
+			model.Alias = model.Name
 		}
 		normalized = append(normalized, model)
 	}
@@ -1009,8 +1012,11 @@ func normalizeCodexKey(entry *config.CodexKey) {
 		model := entry.Models[i]
 		model.Name = strings.TrimSpace(model.Name)
 		model.Alias = strings.TrimSpace(model.Alias)
-		if model.Name == "" && model.Alias == "" {
+		if model.Name == "" {
 			continue
+		}
+		if model.Alias == "" {
+			model.Alias = model.Name
 		}
 		normalized = append(normalized, model)
 	}
@@ -1034,8 +1040,11 @@ func normalizeVertexCompatKey(entry *config.VertexCompatKey) {
 		model := entry.Models[i]
 		model.Name = strings.TrimSpace(model.Name)
 		model.Alias = strings.TrimSpace(model.Alias)
-		if model.Name == "" || model.Alias == "" {
+		if model.Name == "" {
 			continue
+		}
+		if model.Alias == "" {
+			model.Alias = model.Name
 		}
 		normalized = append(normalized, model)
 	}

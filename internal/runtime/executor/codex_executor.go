@@ -112,7 +112,7 @@ func (e *CodexExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, re
 		body, _ = sjson.SetBytes(body, "instructions", "")
 	}
 
-	url := strings.TrimSuffix(baseURL, "/") + "/responses"
+	url := buildCodexURL(baseURL)
 	httpReq, err := e.cacheHelper(ctx, from, url, req, body)
 	if err != nil {
 		return resp, err
@@ -224,7 +224,7 @@ func (e *CodexExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.Au
 		body, _ = sjson.SetBytes(body, "instructions", "")
 	}
 
-	url := strings.TrimSuffix(baseURL, "/") + "/responses"
+	url := buildCodexURL(baseURL)
 	httpReq, err := e.cacheHelper(ctx, from, url, req, body)
 	if err != nil {
 		return nil, err
@@ -602,6 +602,17 @@ func codexCreds(a *cliproxyauth.Auth) (apiKey, baseURL string) {
 		}
 	}
 	return
+}
+
+// buildCodexURL constructs the full URL for Codex API requests.
+// If baseURL already ends with /responses, it uses it directly.
+// Otherwise, it appends /responses to the baseURL.
+func buildCodexURL(baseURL string) string {
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	if strings.HasSuffix(baseURL, "/responses") {
+		return baseURL
+	}
+	return baseURL + "/responses"
 }
 
 func (e *CodexExecutor) resolveCodexConfig(auth *cliproxyauth.Auth) *config.CodexKey {

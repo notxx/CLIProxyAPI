@@ -98,7 +98,7 @@ func (e *OpenAICompatExecutor) Execute(ctx context.Context, auth *cliproxyauth.A
 		return resp, err
 	}
 
-	url := strings.TrimSuffix(baseURL, "/") + "/chat/completions"
+	url := buildOpenAICompatURL(baseURL)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(translated))
 	if err != nil {
 		return resp, err
@@ -194,7 +194,7 @@ func (e *OpenAICompatExecutor) ExecuteStream(ctx context.Context, auth *cliproxy
 		return nil, err
 	}
 
-	url := strings.TrimSuffix(baseURL, "/") + "/chat/completions"
+	url := buildOpenAICompatURL(baseURL)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(translated))
 	if err != nil {
 		return nil, err
@@ -335,6 +335,17 @@ func (e *OpenAICompatExecutor) resolveCredentials(auth *cliproxyauth.Auth) (base
 		apiKey = strings.TrimSpace(auth.Attributes["api_key"])
 	}
 	return
+}
+
+// buildOpenAICompatURL constructs the full URL for OpenAI-compatible API requests.
+// If baseURL already ends with /chat/completions, it uses it directly.
+// Otherwise, it appends /chat/completions to the baseURL.
+func buildOpenAICompatURL(baseURL string) string {
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	if strings.HasSuffix(baseURL, "/chat/completions") {
+		return baseURL
+	}
+	return baseURL + "/chat/completions"
 }
 
 func (e *OpenAICompatExecutor) resolveCompatConfig(auth *cliproxyauth.Auth) *config.OpenAICompatibility {

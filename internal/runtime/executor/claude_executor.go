@@ -129,7 +129,7 @@ func (e *ClaudeExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, r
 		bodyForUpstream = applyClaudeToolPrefix(body, claudeToolPrefix)
 	}
 
-	url := fmt.Sprintf("%s/v1/messages?beta=true", baseURL)
+	url := buildClaudeURL(baseURL, "")
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyForUpstream))
 	if err != nil {
 		return resp, err
@@ -261,7 +261,7 @@ func (e *ClaudeExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.A
 		bodyForUpstream = applyClaudeToolPrefix(body, claudeToolPrefix)
 	}
 
-	url := fmt.Sprintf("%s/v1/messages?beta=true", baseURL)
+	url := buildClaudeURL(baseURL, "")
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyForUpstream))
 	if err != nil {
 		return nil, err
@@ -409,7 +409,7 @@ func (e *ClaudeExecutor) CountTokens(ctx context.Context, auth *cliproxyauth.Aut
 		body = applyClaudeToolPrefix(body, claudeToolPrefix)
 	}
 
-	url := fmt.Sprintf("%s/v1/messages/count_tokens?beta=true", baseURL)
+	url := buildClaudeURL(baseURL, "count_tokens")
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return cliproxyexecutor.Response{}, err
@@ -701,6 +701,20 @@ func claudeCreds(a *cliproxyauth.Auth) (apiKey, baseURL string) {
 		}
 	}
 	return
+}
+
+// buildClaudeURL constructs the full URL for Claude API requests.
+// If baseURL already ends with /messages, it uses it directly.
+// Otherwise, it appends /v1/messages to the baseURL.
+func buildClaudeURL(baseURL, endpoint string) string {
+	baseURL = strings.TrimRight(baseURL, "/")
+	if strings.HasSuffix(baseURL, "/messages") {
+		if endpoint == "count_tokens" {
+			return baseURL + "/count_tokens?beta=true"
+		}
+		return baseURL + "?beta=true"
+	}
+	return fmt.Sprintf("%s/v1/messages%s?beta=true", baseURL, endpoint)
 }
 
 func checkSystemInstructions(payload []byte) []byte {

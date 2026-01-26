@@ -75,14 +75,18 @@ func (cfg *Config) SanitizeVertexCompatKeys() {
 		entry.ProxyURL = strings.TrimSpace(entry.ProxyURL)
 		entry.Headers = NormalizeHeaders(entry.Headers)
 
-		// Sanitize models: remove entries without valid alias
+		// Sanitize models: name is required, alias defaults to name
 		sanitizedModels := make([]VertexCompatModel, 0, len(entry.Models))
 		for _, model := range entry.Models {
-			model.Alias = strings.TrimSpace(model.Alias)
 			model.Name = strings.TrimSpace(model.Name)
-			if model.Alias != "" && model.Name != "" {
-				sanitizedModels = append(sanitizedModels, model)
+			model.Alias = strings.TrimSpace(model.Alias)
+			if model.Name == "" {
+				continue
 			}
+			if model.Alias == "" {
+				model.Alias = model.Name
+			}
+			sanitizedModels = append(sanitizedModels, model)
 		}
 		entry.Models = sanitizedModels
 
