@@ -12,6 +12,7 @@ import (
 
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/api"
 	"github.com/router-for-me/CLIProxyAPI/v6/internal/config"
+	"github.com/router-for-me/CLIProxyAPI/v6/internal/usage"
 	"github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,10 +26,37 @@ import (
 //   - configPath: The path to the configuration file
 //   - localPassword: Optional password accepted for local management requests
 func StartService(cfg *config.Config, configPath string, localPassword string) {
+	// Initialize file usage plugin if persistence is configured
+	var filePlugin *usage.FileUsagePlugin
+	if cfg.UsageStatistics.PersistFile != "" {
+		stats := usage.GetRequestStatistics()
+		interval, _ := time.ParseDuration(cfg.UsageStatistics.SaveInterval)
+		if interval <= 0 && cfg.UsageStatistics.SaveInterval != "" && cfg.UsageStatistics.SaveInterval != "0" {
+			log.Warnf("Invalid save-interval %q, disabling periodic save", cfg.UsageStatistics.SaveInterval)
+		}
+		filePlugin = usage.NewFileUsagePlugin(
+			cfg.UsageStatistics.PersistFile,
+			interval,
+			cfg.UsageStatistics.RestoreOnStart,
+			stats,
+		)
+	}
+
 	builder := cliproxy.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(configPath).
 		WithLocalManagementPassword(localPassword)
+
+	// Add hooks to start/stop file plugin
+	if filePlugin != nil {
+		hooks := cliproxy.Hooks{
+			OnAfterStart: func(s *cliproxy.Service) {
+				filePlugin.Start()
+				log.Infof("Usage statistics persistence enabled: %s", cfg.UsageStatistics.PersistFile)
+			},
+		}
+		builder = builder.WithHooks(hooks)
+	}
 
 	ctxSignal, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -52,6 +80,11 @@ func StartService(cfg *config.Config, configPath string, localPassword string) {
 	err = service.Run(runCtx)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		log.Errorf("proxy service exited with error: %v", err)
+	}
+
+	// Stop file plugin on shutdown to ensure final save
+	if filePlugin != nil {
+		filePlugin.Stop()
 	}
 }
 

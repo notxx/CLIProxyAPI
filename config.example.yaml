@@ -53,6 +53,16 @@ logs-max-total-size-mb: 0
 # When false, disable in-memory usage statistics aggregation
 usage-statistics-enabled: false
 
+# Usage statistics persistence configuration
+# usage-statistics:
+#   # Path to save usage data (supports ~ for home directory). When set, statistics are
+#   # automatically saved to this file and restored on startup.
+#   persist-file: "~/.cli-proxy-api/usage.json"
+#   # Auto-save interval (e.g., "5m", "1h", "30s"). Set to 0 to only save on shutdown.
+#   save-interval: "5m"
+#   # Load data from file on startup if file exists.
+#   restore-on-start: true
+
 # Proxy URL. Supports socks5/http/https protocols. Example: socks5://user:pass@192.168.1.1:1080/
 proxy-url: ""
 

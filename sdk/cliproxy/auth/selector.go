@@ -13,6 +13,7 @@ import (
 	"time"
 
 	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/executor"
+	log "github.com/sirupsen/logrus"
 )
 
 // RoundRobinSelector provides a simple provider scoped round-robin selection strategy.
@@ -156,6 +157,26 @@ func getAvailableAuths(auths []*Auth, provider, model string, now time.Time) ([]
 				resetIn = 0
 			}
 			return nil, newModelCooldownError(model, providerForError, resetIn)
+		}
+		// Log details about why all auths are unavailable
+		if log.IsLevelEnabled(log.DebugLevel) {
+			for _, auth := range auths {
+				if auth == nil {
+					continue
+				}
+				blocked, reason, next := isAuthBlockedForModel(auth, model, now)
+				reasonStr := "unknown"
+				switch reason {
+				case blockReasonDisabled:
+					reasonStr = "disabled"
+				case blockReasonCooldown:
+					reasonStr = "cooldown"
+				case blockReasonOther:
+					reasonStr = "other"
+				}
+				log.Debugf("auth unavailable: auth_id=%s provider=%s model=%s blocked=%v reason=%s next_retry=%v status=%s status_message=%s",
+					auth.ID, auth.Provider, model, blocked, reasonStr, next, auth.Status, auth.StatusMessage)
+			}
 		}
 		return nil, &Error{Code: "auth_unavailable", Message: "no auth available"}
 	}

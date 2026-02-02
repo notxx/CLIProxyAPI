@@ -1225,6 +1225,13 @@ func (m *Manager) MarkResult(ctx context.Context, result Result) {
 		registry.GetGlobalRegistry().ResumeClientModel(result.AuthID, result.Model)
 	} else if shouldSuspendModel {
 		registry.GetGlobalRegistry().SuspendClientModel(result.AuthID, result.Model, suspendReason)
+		entry := logEntryWithRequestID(ctx)
+		statusCode := statusCodeFromResult(result.Error)
+		errMsg := ""
+		if result.Error != nil {
+			errMsg = result.Error.Message
+		}
+		entry.Warnf("auth suspended: auth_id=%s model=%s reason=%s status_code=%d error=%s", result.AuthID, result.Model, suspendReason, statusCode, errMsg)
 	}
 
 	m.hook.OnResult(ctx, result)

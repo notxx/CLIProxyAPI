@@ -54,6 +54,9 @@ type Config struct {
 	// UsageStatisticsEnabled toggles in-memory usage aggregation; when false, usage data is discarded.
 	UsageStatisticsEnabled bool `yaml:"usage-statistics-enabled" json:"usage-statistics-enabled"`
 
+	// UsageStatistics configures file persistence for usage statistics.
+	UsageStatistics UsageStatisticsConfig `yaml:"usage-statistics" json:"usage-statistics"`
+
 	// DisableCooling disables quota cooldown scheduling when true.
 	DisableCooling bool `yaml:"disable-cooling" json:"disable-cooling"`
 
@@ -120,6 +123,17 @@ type TLSConfig struct {
 	Cert string `yaml:"cert" json:"cert"`
 	// Key is the path to the TLS private key file.
 	Key string `yaml:"key" json:"key"`
+}
+
+// UsageStatisticsConfig configures file persistence for usage statistics.
+type UsageStatisticsConfig struct {
+	// PersistFile is the path to the JSON file for persistence (supports ~ for home directory).
+	// When empty, usage data is not persisted to disk.
+	PersistFile string `yaml:"persist-file" json:"persist-file"`
+	// SaveInterval is the auto-save interval (e.g., "5m", "1h"). When zero, data is only saved on shutdown.
+	SaveInterval string `yaml:"save-interval" json:"save-interval"`
+	// RestoreOnStart enables loading data from file on startup.
+	RestoreOnStart bool `yaml:"restore-on-start" json:"restore-on-start"`
 }
 
 // RemoteManagement holds management API configuration under 'remote-management'.

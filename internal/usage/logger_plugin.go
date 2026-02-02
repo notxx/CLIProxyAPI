@@ -139,6 +139,12 @@ var defaultRequestStatistics = NewRequestStatistics()
 // GetRequestStatistics returns the shared statistics store.
 func GetRequestStatistics() *RequestStatistics { return defaultRequestStatistics }
 
+// MergeSnapshot merges external snapshot into shared statistics.
+// This is used by file persistence plugin to restore data on startup.
+func MergeSnapshot(snapshot StatisticsSnapshot) MergeResult {
+	return defaultRequestStatistics.MergeSnapshot(snapshot)
+}
+
 // NewRequestStatistics constructs an empty statistics store.
 func NewRequestStatistics() *RequestStatistics {
 	return &RequestStatistics{
